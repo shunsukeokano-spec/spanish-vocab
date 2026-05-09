@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulario — Spanish Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fff9f0;
+    --card: #ffffff;
+    --ink: #1a1208;
+    --ink2: #5a4a2a;
+    --accent: #c84b2f;
+    --accent2: #2f7ac8;
+    --gold: #d4a017;
+    --border: #e0d4b8;
+    --success: #2a7a4a;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(26,18,8,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg); color: var(--ink); min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(212,160,23,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(200,75,47,0.06) 0%, transparent 60%);
+  }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface); position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); font-style: italic; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 7px 14px; border: 1px solid transparent; border-radius: 8px;
+    background: none; font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    cursor: pointer; color: var(--ink2); letter-spacing: 0.05em; text-transform: uppercase; transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--bg); border-color: var(--border); }
+  .nav-tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .screen { display: none; padding: 36px 32px; max-width: 720px; margin: 0 auto; }
+  .screen.active { display: block; }
+  .screen-title { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; margin-bottom: 6px; }
+  .screen-subtitle { font-size: 0.76rem; color: var(--ink2); margin-bottom: 28px; letter-spacing: 0.04em; }
+  .field-group { margin-bottom: 18px; }
+  label { display: block; font-size: 0.70rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink2); margin-bottom: 6px; }
+  input[type=text], input[type=search] {
+    width: 100%; padding: 11px 15px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--card); font-family: 'DM Mono', monospace; font-size: 0.92rem;
+    color: var(--ink); outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,75,47,0.1); }
+  .lang-toggle {
+    display: flex; border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; background: var(--card); margin-bottom: 18px;
+  }
+  .lang-btn {
+    flex: 1; padding: 10px; border: none; background: none;
+    font-family: 'DM Mono', monospace; font-size: 0.76rem; letter-spacing: 0.05em;
+    text-transform: uppercase; cursor: pointer; color: var(--ink2); transition: all 0.15s;
+  }
+  .lang-btn.active { background: var(--ink); color: var(--bg); }
+  .lang-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+  .result-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 15px; min-height: 62px;
+  }
+  .result-main { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; }
+  .result-sub { font-size: 0.76rem; color: var(--ink2); margin-top: 4px; font-style: italic; }
+  .result-placeholder { color: var(--border); font-size: 0.82rem; }
+  .autosave-badge {
+    font-size: 0.70rem; color: var(--success); margin-top: 8px;
+    opacity: 0; transition: opacity 0.3s; min-height: 18px;
+  }
+  .autosave-badge.show { opacity: 1; }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .tag-chip {
+    padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg); font-size: 0.70rem; letter-spacing: 0.04em;
+    cursor: pointer; transition: all 0.12s; color: var(--ink2);
+  }
+  .tag-chip.selected { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .tag-chip.add-tag { border-style: dashed; }
+  .btn {
+    padding: 12px 26px; border-radius: var(--radius); border: none;
+    font-family: 'DM Mono', monospace; font-size: 0.82rem; letter-spacing: 0.06em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s; font-weight: 500;
+  }
+  .btn-primary { background: var(--accent); color: white; width: 100%; margin-top: 8px; }
+  .btn-primary:hover { background: #a83a20; transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-primary:disabled { background: var(--border); cursor: not-allowed; transform: none; box-shadow: none; color: var(--ink2); }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--ink2); }
+  .btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-translate { background: var(--accent2); color: white; font-size: 0.76rem; width: 100%; margin-top: 4px; }
+  .btn-translate:hover { background: #1f5fa0; }
+  .btn-translate:disabled { background: var(--border); cursor: not-allowed; color: var(--ink2); }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: var(--bg); padding: 11px 22px;
+    border-radius: 40px; font-size: 0.80rem; letter-spacing: 0.04em;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index: 1000; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--accent); }
+
+  /* FLASHCARDS */
+  .fc-controls { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 0.70rem; color: var(--ink2); letter-spacing: 0.08em; text-transform: uppercase; }
+  .fc-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font-size: 0.76rem; color: var(--ink2); }
+  .progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.4s ease; }
+  .flashcard-wrap { perspective: 1200px; margin-bottom: 20px; }
+  .flashcard {
+    position: relative; width: 100%; min-height: 250px;
+    transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); cursor: pointer;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .fc-face {
+    position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; padding: 36px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .fc-front { background: var(--card); }
+  .fc-back { background: var(--ink); transform: rotateY(180deg); color: var(--bg); border-color: var(--ink); }
+  .fc-lang { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-bottom: 14px; }
+  .fc-word { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+  .fc-pronunciation { font-size: 0.80rem; opacity: 0.6; font-style: italic; margin-bottom: 14px; }
+  .fc-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .fc-tag { padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); font-size: 0.63rem; opacity: 0.7; }
+  .fc-tag-front { border-color: var(--border); color: var(--ink2); }
+  .fc-hint { font-size: 0.70rem; opacity: 0.4; margin-top: 18px; letter-spacing: 0.06em; }
+  .fc-example-label { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink2); margin-bottom: 6px; }
+  .fc-example {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; font-size: 0.86rem; line-height: 1.6; color: var(--ink2); font-style: italic; margin-bottom: 14px;
+  }
+  .fc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .btn-know { background: var(--success); color: white; padding: 13px; }
+  .btn-know:hover { background: #1d6038; }
+  .btn-forget { background: var(--bg); color: var(--ink); border: 1px solid var(--border); padding: 13px; }
+  .btn-forget:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-example { width: 100%; background: none; border: 1px dashed var(--border); color: var(--ink2); padding: 9px; font-size: 0.76rem; margin-bottom: 14px; }
+  .btn-example:hover { border-color: var(--accent2); color: var(--accent2); }
+  .fc-done { text-align: center; padding: 50px 20px; }
+  .fc-done-emoji { font-size: 3rem; margin-bottom: 14px; }
+  .fc-done-title { font-family: 'Playfair Display', serif; font-size: 1.7rem; margin-bottom: 8px; }
+  .fc-done-sub { font-size: 0.80rem; color: var(--ink2); margin-bottom: 22px; line-height: 1.6; }
+
+  /* LIST */
+  .search-row { margin-bottom: 18px; }
+  .word-list { display: flex; flex-direction: column; gap: 9px; }
+  .word-item {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; transition: box-shadow 0.15s;
+  }
+  .word-item:hover { box-shadow: var(--shadow); }
+  .wi-spanish { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; min-width: 130px; }
+  .wi-english { font-size: 0.83rem; color: var(--ink2); flex: 1; }
+  .wi-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .wi-tag { padding: 2px 7px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); font-size: 0.63rem; color: var(--ink2); }
+  .wi-stats { font-size: 0.68rem; color: var(--ink2); text-align: right; white-space: nowrap; }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--ink2); }
+  .empty-state-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.83rem; line-height: 1.6; }
+
+  /* HISTORY */
+  .history-summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px;
+  }
+  .summary-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px; text-align: center;
+  }
+  .summary-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .summary-label { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); margin-top: 4px; }
+  .session-list { display: flex; flex-direction: column; gap: 9px; }
+  .session-item {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+  }
+  .session-date { font-size: 0.76rem; color: var(--ink2); min-width: 90px; }
+  .session-score {
+    font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700;
+    color: var(--success); min-width: 60px;
+  }
+  .session-score.low { color: var(--accent); }
+  .session-meta { font-size: 0.76rem; color: var(--ink2); flex: 1; line-height: 1.5; }
+  .session-dur { font-size: 0.70rem; color: var(--ink2); text-align: right; white-space: nowrap; }
+
+  .loading-dots::after { content: '.'; animation: dots 1.2s steps(4,end) infinite; }
+  @keyframes dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
+
+  @media (max-width: 600px) {
+    nav { padding: 12px 14px; }
+    .screen { padding: 20px 14px; }
+    .screen-title { font-size: 1.5rem; }
+    .fc-word { font-size: 1.7rem; }
+    .wi-spanish { min-width: 90px; font-size: 1rem; }
+    .nav-tab { padding: 6px 9px; font-size: 0.67rem; }
+    .history-summary { grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .summary-num { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Vocabu<span>lario</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchScreen('add',this)">+ Add</button>
+    <button class="nav-tab" onclick="switchScreen('flash',this)">Cards</button>
+    <button class="nav-tab" onclick="switchScreen('list',this)">List</button>
+    <button class="nav-tab" onclick="switchScreen('history',this)">History</button>
+  </div>
+</nav>
+
+<!-- ADD -->
+<div class="screen active" id="screen-add">
+  <div class="screen-title">Add a word</div>
+  <div class="screen-subtitle">Type in either language — auto-saves on translate</div>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-lang-en" onclick="setLang('en')">🇬🇧 English → Spanish</button>
+    <div class="lang-divider"></div>
+    <button class="lang-btn" id="btn-lang-es" onclick="setLang('es')">🇪🇸 Spanish → English</button>
+  </div>
+
+  <div class="field-group">
+    <label id="input-label">English word or phrase</label>
+    <input type="text" id="input-word" placeholder="e.g. apple" oninput="onWordInput()"
+      onkeydown="if(event.key==='Enter'&&!document.getElementById('btn-translate').disabled)translateWord()">
+  </div>
+
+  <button class="btn btn-translate" id="btn-translate" onclick="translateWord()" disabled>Translate →</button>
+
+  <div style="margin-top:18px">
+    <label>Translation</label>
+    <div class="result-box" id="result-box"><div class="result-placeholder">will appear here</div></div>
+    <div class="autosave-badge" id="autosave-badge"></div>
+  </div>
+
+  <div class="field-group" style="margin-top:22px">
+    <label>Tags <span style="opacity:0.5;font-size:0.63rem">(optional — select before translating)</span></label>
+    <div class="tags-row" id="tags-row">
+      <span class="tag-chip add-tag" onclick="addNewTag()">+ new tag</span>
+    </div>
+  </div>
+</div>
+
+<!-- FLASHCARDS -->
+<div class="screen" id="screen-flash">
+  <div class="screen-title">Flashcards</div>
+  <div class="screen-subtitle">Tap a card to flip — both directions, randomly</div>
+  <div class="fc-controls">
+    <span class="filter-label">Filter:</span>
+    <div id="fc-tag-filters" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+  <div id="fc-area">
+    <div class="empty-state"><div class="empty-state-icon">📚</div><p>No words yet.<br>Add some words first!</p></div>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="screen" id="screen-list">
+  <div class="screen-title">My vocabulary</div>
+  <div class="screen-subtitle" id="list-count">0 words</div>
+  <div class="search-row">
+    <input type="search" id="search-input" placeholder="Search words..." oninput="renderList()">
+  </div>
+  <div class="word-list" id="word-list"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="screen-history">
+  <div class="screen-title">Study history</div>
+  <div class="screen-subtitle">All your past flashcard sessions</div>
+  <div class="history-summary">
+    <div class="summary-card"><div class="summary-num" id="h-total-sessions">—</div><div class="summary-label">Sessions</div></div>
+    <div class="summary-card"><div class="summary-num" id="h-total-cards">—</div><div class="summary-label">Cards reviewed</div></div>
+    <div class="summary-card"><div class="summary-num" id="h-avg-score">—</div><div class="summary-label">Avg score</div></div>
+  </div>
+  <div class="session-list" id="session-list">
+    <div class="empty-state"><div class="empty-state-icon">📅</div><p>No sessions yet.<br>Complete a flashcard round to see history.</p></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc2cUHs3oafFkAR6GGuWrVdEfgOANoJNfewbuMyuZj_gXg7ISga4jkt4WBTH4LCQboUg/exec";
+const MYMEMORY   = "https://api.mymemory.translated.net/get";
+const GLOSBE     = "https://glosbe.com/gapi/translate";
+
+let words = [];
+let sessions = [];
+let allTags = new Set(["travel","food","verbs","home","work","numbers"]);
+let selectedTags = new Set();
+let currentLang = "en";
+
+// ── DATA ─────────────────────────────────────────────────
+async function loadWords() {
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=getWords");
+    const data = await r.json();
+    words = Array.isArray(data) ? data : [];
+    words.forEach(w => (w.tags||"").split(",").forEach(t => t.trim() && allTags.add(t.trim())));
+    renderTagChips(); renderFCTagFilters(); renderList();
+  } catch(e) { showToast("Could not load words","error"); }
+}
+
+async function loadSessions() {
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=getSessions");
+    const data = await r.json();
+    sessions = Array.isArray(data) ? data : [];
+    renderHistory();
+  } catch(e) { showToast("Could not load history","error"); }
+}
+
+async function saveWordToSheet(w) {
+  const r = await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"addWord",...w})});
+  return r.json();
+}
+
+async function updateStats(id, correct) {
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"updateStats",id,correct})});
+}
+
+async function saveSessionToSheet(s) {
+  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"saveSession",...s})});
+}
+
+// ── TRANSLATION (MyMemory, free) ──────────────────────────
+async function translateWord() {
+  const word = document.getElementById("input-word").value.trim();
+  if (!word) return;
+  const btn = document.getElementById("btn-translate");
+  btn.disabled = true; btn.textContent = "Translating"; btn.classList.add("loading-dots");
+  document.getElementById("result-box").innerHTML = '<div class="result-placeholder">thinking<span class="loading-dots"></span></div>';
+
+  const isEnToEs = currentLang === "en";
+  const langPair = isEnToEs ? "en|es" : "es|en";
+
+  try {
+    const url = `${MYMEMORY}?q=${encodeURIComponent(word)}&langpair=${langPair}`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (data.responseStatus !== 200) throw new Error("Translation failed");
+
+    const translated = data.responseData.translatedText;
+    const english = isEnToEs ? word : translated;
+    const spanish = isEnToEs ? translated : word;
+
+    // basic pronunciation guide (stress pattern hint)
+    const pronunciation = getPronunciationHint(spanish);
+
+    document.getElementById("result-box").innerHTML = `
+      <div class="result-main">${isEnToEs ? spanish : english}</div>
+      <div class="result-sub">${pronunciation}</div>`;
+
+    await autoSave({english, spanish, pronunciation});
+  } catch(e) {
+    document.getElementById("result-box").innerHTML = '<div class="result-placeholder" style="color:var(--accent)">Translation failed. Check connection and try again.</div>';
+    showToast("Translation failed","error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Translate →"; btn.classList.remove("loading-dots");
+  }
+}
+
+function getPronunciationHint(spanish) {
+  // Simple Spanish pronunciation rules for learners
+  const s = spanish.toLowerCase();
+  const hints = [];
+  if (s.includes('ñ')) hints.push('ñ = ny sound');
+  if (s.includes('ll')) hints.push('ll = y sound');
+  if (s.includes('rr')) hints.push('rr = rolled r');
+  if (s.includes('j') || s.includes('g')) hints.push('j/g = h sound');
+  if (s.includes('h')) hints.push('h is silent');
+  // stress hint
+  if (s.includes('á')) hints.push("stress on á");
+  else if (s.includes('é')) hints.push("stress on é");
+  else if (s.includes('í')) hints.push("stress on í");
+  else if (s.includes('ó')) hints.push("stress on ó");
+  else if (s.includes('ú')) hints.push("stress on ú");
+  return hints.length ? hints.join(' · ') : 'pronounced as spelled';
+}
+
+async function autoSave(parsed) {
+  const badge = document.getElementById("autosave-badge");
+  const isDupe = words.some(w =>
+    (w.english||"").toLowerCase() === (parsed.english||"").toLowerCase() &&
+    (w.spanish||"").toLowerCase() === (parsed.spanish||"").toLowerCase()
+  );
+  if (isDupe) {
+    badge.textContent = "↩ Already in your list"; badge.classList.add("show"); return;
+  }
+  const tags = [...selectedTags].join(",");
+  try {
+    const result = await saveWordToSheet({...parsed, tags});
+    if (result.success) {
+      words.push({id:result.id,...parsed,tags,times_seen:0,times_correct:0});
+      renderTagChips(); renderFCTagFilters(); renderList();
+      badge.textContent = "✓ Saved to your vocabulary"; badge.classList.add("show");
+      setTimeout(() => {
+        document.getElementById("input-word").value = "";
+        document.getElementById("result-box").innerHTML = '<div class="result-placeholder">will appear here</div>';
+        document.getElementById("btn-translate").disabled = true;
+        selectedTags.clear(); renderTagChips();
+        setTimeout(() => badge.classList.remove("show"), 800);
+      }, 1800);
+    }
+  } catch(e) { showToast("Auto-save failed","error"); }
+}
+
+// ── EXAMPLE SENTENCES (Glosbe, free) ─────────────────────
+async function getExample(spanish, english) {
+  document.getElementById("example-area").style.display = "block";
+  document.getElementById("btn-example").style.display = "none";
+  document.getElementById("example-text").innerHTML = 'Loading<span class="loading-dots"></span>';
+
+  try {
+    // Glosbe API for example sentences
+    const url = `https://glosbe.com/gapi/translate?from=es&dest=en&format=json&phrase=${encodeURIComponent(spanish)}&pretty=true`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    let exampleText = null;
+    if (data.examples && data.examples.length > 0) {
+      const ex = data.examples[0];
+      const src = ex.first ? ex.first.replace(/<[^>]+>/g,'').trim() : null;
+      const tgt = ex.second ? ex.second.replace(/<[^>]+>/g,'').trim() : null;
+      if (src && tgt) exampleText = `${src}\n${tgt}`;
+    }
+
+    if (!exampleText) {
+      // Fallback: MyMemory context examples
+      const mUrl = `${MYMEMORY}?q=${encodeURIComponent(spanish)}&langpair=es|en`;
+      const mr = await fetch(mUrl);
+      const md = await mr.json();
+      const matches = md.matches || [];
+      const ctx = matches.find(m => m.segment && m.segment.length > 10 && m.segment !== spanish);
+      if (ctx) {
+        exampleText = `${ctx.segment}\n${ctx.translation}`;
+      } else {
+        exampleText = `No example found for "${spanish}". Try looking it up on SpanishDict.com`;
+      }
+    }
+
+    document.getElementById("example-text").textContent = exampleText;
+  } catch(e) {
+    document.getElementById("example-text").textContent = `Could not load example. Try SpanishDict.com for "${spanish}"`;
+  }
+}
+
+// ── LANG TOGGLE ──────────────────────────────────────────
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById("btn-lang-en").classList.toggle("active", lang==="en");
+  document.getElementById("btn-lang-es").classList.toggle("active", lang==="es");
+  document.getElementById("input-label").textContent = lang==="en" ? "English word or phrase" : "Spanish word or phrase";
+  document.getElementById("input-word").placeholder = lang==="en" ? "e.g. apple" : "e.g. manzana";
+  document.getElementById("input-word").value = "";
+  document.getElementById("result-box").innerHTML = '<div class="result-placeholder">will appear here</div>';
+  document.getElementById("btn-translate").disabled = true;
+  document.getElementById("autosave-badge").className = "autosave-badge";
+}
+
+function onWordInput() {
+  document.getElementById("btn-translate").disabled = !document.getElementById("input-word").value.trim();
+  document.getElementById("result-box").innerHTML = '<div class="result-placeholder">will appear here</div>';
+  document.getElementById("autosave-badge").className = "autosave-badge";
+}
+
+// ── TAGS ─────────────────────────────────────────────────
+function renderTagChips() {
+  const row = document.getElementById("tags-row"); row.innerHTML = '';
+  [...allTags].forEach(tag => {
+    const c = document.createElement("span");
+    c.className = "tag-chip"+(selectedTags.has(tag)?" selected":"");
+    c.textContent = tag;
+    c.onclick = () => { selectedTags.has(tag)?selectedTags.delete(tag):selectedTags.add(tag); renderTagChips(); };
+    row.appendChild(c);
+  });
+  const add = document.createElement("span");
+  add.className = "tag-chip add-tag"; add.textContent = "+ new tag"; add.onclick = addNewTag;
+  row.appendChild(add);
+}
+function addNewTag() {
+  const n = prompt("New tag name:");
+  if (n&&n.trim()) { allTags.add(n.trim()); selectedTags.add(n.trim()); renderTagChips(); }
+}
+
+// ── FLASHCARDS ───────────────────────────────────────────
+let fcDeck=[], fcIndex=0, fcFlipped=false, fcFilterTags=new Set();
+let fcSessionStart=null, fcSessionTags="";
+
+function renderFCTagFilters() {
+  const wrap = document.getElementById("fc-tag-filters"); wrap.innerHTML='';
+  const all = document.createElement("span");
+  all.className = "tag-chip"+(fcFilterTags.size===0?" selected":"");
+  all.textContent = "All";
+  all.onclick = () => { fcFilterTags.clear(); renderFCTagFilters(); buildDeck(); };
+  wrap.appendChild(all);
+  [...allTags].forEach(tag => {
+    const c = document.createElement("span");
+    c.className = "tag-chip"+(fcFilterTags.has(tag)?" selected":"");
+    c.textContent = tag;
+    c.onclick = () => { fcFilterTags.has(tag)?fcFilterTags.delete(tag):fcFilterTags.add(tag); renderFCTagFilters(); buildDeck(); };
+    wrap.appendChild(c);
+  });
+}
+
+function buildDeck() {
+  let pool = [...words];
+  if (fcFilterTags.size>0) pool = pool.filter(w => {
+    const wt = (w.tags||"").split(",").map(t=>t.trim());
+    return [...fcFilterTags].some(t=>wt.includes(t));
+  });
+  fcDeck = pool.sort(()=>Math.random()-0.5);
+  fcIndex = 0;
+  fcSessionStart = Date.now();
+  fcSessionTags = fcFilterTags.size>0 ? [...fcFilterTags].join(",") : "all";
+  renderCard();
+}
+
+function renderCard() {
+  const area = document.getElementById("fc-area");
+  if (fcDeck.length===0) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📚</div><p>No words match this filter.<br>Add some first!</p></div>`; return;
+  }
+  if (fcIndex>=fcDeck.length) {
+    const correct = fcDeck.filter(w=>w._sessionCorrect).length;
+    const pct = Math.round((correct/fcDeck.length)*100);
+    const dur = Math.round((Date.now()-fcSessionStart)/1000);
+
+    // Save session
+    saveSessionToSheet({
+      date: new Date().toISOString(),
+      tags_studied: fcSessionTags,
+      cards_reviewed: fcDeck.length,
+      cards_correct: correct,
+      duration_seconds: dur
+    });
+    // Add to local sessions for immediate display
+    sessions.unshift({
+      date: new Date().toISOString(),
+      tags_studied: fcSessionTags,
+      cards_reviewed: fcDeck.length,
+      cards_correct: correct,
+      duration_seconds: dur
+    });
+
+    area.innerHTML=`
+      <div class="fc-done">
+        <div class="fc-done-emoji">${pct>=80?'🎉':pct>=50?'💪':'📖'}</div>
+        <div class="fc-done-title">Session complete!</div>
+        <div class="fc-done-sub">
+          You knew <strong>${correct} of ${fcDeck.length}</strong> words — <strong>${pct}%</strong><br>
+          Time: ${formatDur(dur)}
+        </div>
+        <button class="btn btn-primary" onclick="buildDeck()" style="max-width:200px;margin:0 auto">Shuffle & Restart</button>
+      </div>`; return;
+  }
+
+  const w = fcDeck[fcIndex]; fcFlipped=false;
+  const goEnToEs = Math.random()<0.5;
+  const frontWord = goEnToEs?w.english:w.spanish;
+  const backWord = goEnToEs?w.spanish:w.english;
+  const frontLang = goEnToEs?"English":"Español";
+  const backLang = goEnToEs?"Español":"English";
+  const wTags = (w.tags||"").split(",").map(t=>t.trim()).filter(Boolean);
+  const pct = Math.round((fcIndex/fcDeck.length)*100);
+  const wEs = (w.spanish||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+  const wEn = (w.english||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+
+  area.innerHTML=`
+    <div class="fc-progress">
+      <span>${fcIndex+1} / ${fcDeck.length}</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="fc-face fc-front">
+          <div class="fc-lang">${frontLang}</div>
+          <div class="fc-word">${frontWord}</div>
+          ${!goEnToEs?`<div class="fc-pronunciation">${w.pronunciation||''}</div>`:''}
+          <div class="fc-tags">${wTags.map(t=>`<span class="fc-tag fc-tag-front">${t}</span>`).join('')}</div>
+          <div class="fc-hint">tap to reveal</div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-lang" style="opacity:0.4">${backLang}</div>
+          <div class="fc-word">${backWord}</div>
+          ${goEnToEs?`<div class="fc-pronunciation" style="opacity:0.5">${w.pronunciation||''}</div>`:''}
+          <div class="fc-tags">${wTags.map(t=>`<span class="fc-tag">${t}</span>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+    <div id="example-area" style="display:none">
+      <div class="fc-example-label">Example sentence</div>
+      <div class="fc-example" id="example-text"></div>
+    </div>
+    <button class="btn btn-ghost btn-example" id="btn-example"
+      onclick="getExample('${wEs}','${wEn}')" style="display:none">
+      💬 Show example sentence
+    </button>
+    <div class="fc-actions" id="fc-action-btns" style="display:none">
+      <button class="btn btn-forget" onclick="markCard(false)">✗ Don't know</button>
+      <button class="btn btn-know" onclick="markCard(true)">✓ Know it</button>
+    </div>`;
+}
+
+function flipCard() {
+  if (fcFlipped) return; fcFlipped=true;
+  document.getElementById("flashcard").classList.add("flipped");
+  document.getElementById("fc-action-btns").style.display="grid";
+  document.getElementById("btn-example").style.display="block";
+  const w=fcDeck[fcIndex];
+  updateStats(w.id,false);
+  w.times_seen=(parseInt(w.times_seen)||0)+1;
+}
+
+function markCard(correct) {
+  const w=fcDeck[fcIndex]; w._sessionCorrect=correct;
+  if (correct) { updateStats(w.id,true); w.times_correct=(parseInt(w.times_correct)||0)+1; }
+  fcIndex++; renderCard();
+}
+
+// ── HISTORY ──────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById("session-list");
+  if (sessions.length===0) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-state-icon">📅</div><p>No sessions yet.<br>Complete a flashcard round to see history.</p></div>`;
+    document.getElementById("h-total-sessions").textContent="0";
+    document.getElementById("h-total-cards").textContent="0";
+    document.getElementById("h-avg-score").textContent="—";
+    return;
+  }
+  const totalCards = sessions.reduce((s,x)=>s+(parseInt(x.cards_reviewed)||0),0);
+  const totalCorrect = sessions.reduce((s,x)=>s+(parseInt(x.cards_correct)||0),0);
+  const avgScore = totalCards>0 ? Math.round((totalCorrect/totalCards)*100)+"%" : "—";
+  document.getElementById("h-total-sessions").textContent = sessions.length;
+  document.getElementById("h-total-cards").textContent = totalCards;
+  document.getElementById("h-avg-score").textContent = avgScore;
+
+  const sorted = [...sessions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  list.innerHTML = sorted.map(s => {
+    const reviewed = parseInt(s.cards_reviewed)||0;
+    const correct = parseInt(s.cards_correct)||0;
+    const pct = reviewed>0 ? Math.round((correct/reviewed)*100) : 0;
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const timeStr = d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="session-item">
+        <div class="session-date">${dateStr}<br>${timeStr}</div>
+        <div class="session-score ${pct<50?'low':''}">${pct}%</div>
+        <div class="session-meta">
+          ${correct}/${reviewed} cards correct<br>
+          <span style="opacity:0.6">${s.tags_studied||'all'}</span>
+        </div>
+        <div class="session-dur">${formatDur(parseInt(s.duration_seconds)||0)}</div>
+      </div>`;
+  }).join('');
+}
+
+function formatDur(sec) {
+  if (sec<60) return `${sec}s`;
+  return `${Math.floor(sec/60)}m ${sec%60}s`;
+}
+
+// ── LIST ─────────────────────────────────────────────────
+function renderList() {
+  const q = (document.getElementById("search-input")?.value||"").toLowerCase();
+  const list = document.getElementById("word-list");
+  const filtered = words.filter(w=>(w.english||"").toLowerCase().includes(q)||(w.spanish||"").toLowerCase().includes(q));
+  document.getElementById("list-count").textContent=`${words.length} word${words.length!==1?'s':''}`;
+  if (filtered.length===0) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-state-icon">🔍</div><p>${words.length===0?'No words yet. Add some!':'No matches found.'}</p></div>`; return;
+  }
+  list.innerHTML = filtered.map(w => {
+    const wTags=(w.tags||"").split(",").map(t=>t.trim()).filter(Boolean);
+    const seen=parseInt(w.times_seen)||0, correct=parseInt(w.times_correct)||0;
+    const pct=seen>0?Math.round((correct/seen)*100):null;
+    return `<div class="word-item">
+      <div class="wi-spanish">${w.spanish}</div>
+      <div class="wi-english">${w.english}${w.pronunciation?`<br><span style="opacity:0.5;font-size:0.73rem;font-style:italic">${w.pronunciation}</span>`:''}</div>
+      <div class="wi-tags">${wTags.map(t=>`<span class="wi-tag">${t}</span>`).join('')}</div>
+      <div class="wi-stats">${seen>0?`${pct}%<br><span style="opacity:0.5">${seen} seen</span>`:'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── NAV ──────────────────────────────────────────────────
+function switchScreen(name,el) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  if (name==='flash') buildDeck();
+  if (name==='list') renderList();
+  if (name==='history') { loadSessions(); }
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg,type="") {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast"+(type?" "+type:""); t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+loadWords();
+</script>
+</body>
+</html>
