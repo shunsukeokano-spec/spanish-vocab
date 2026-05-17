@@ -169,6 +169,14 @@
   .wi-edit-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 0.86rem; background: var(--bg); color: var(--ink); outline: none; }
   .wi-edit-input:focus { border-color: var(--accent); }
   .wi-edit-actions { display: flex; gap: 8px; }
+  .recent-item {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem;
+  }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-es { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; min-width: 120px; }
+  .recent-en { color: var(--ink2); flex: 1; }
+  .recent-pron { font-size: 0.70rem; color: var(--ink2); opacity: 0.6; font-style: italic; }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--ink2); }
   .empty-state-icon { font-size: 2.5rem; margin-bottom: 12px; }
   .empty-state p { font-size: 0.83rem; line-height: 1.6; }
@@ -235,6 +243,10 @@
     <div class="tags-row" id="tags-row">
       <span class="tag-chip add-tag" onclick="addNewTag()">+ new tag</span>
     </div>
+  </div>
+  <div id="recent-section" style="margin-top:32px;display:none">
+    <label style="margin-bottom:10px">Recently added</label>
+    <div id="recent-list"></div>
   </div>
 </div>
 
@@ -340,7 +352,7 @@ async function loadWords() {
     const data = await jsonp({action: "getWords"});
     words = Array.isArray(data) ? data : [];
     words.forEach(w => (w.tags||"").split(",").forEach(t => t.trim() && allTags.add(t.trim())));
-    renderTagChips(); renderFCTagFilters(); renderList();
+    renderTagChips(); renderFCTagFilters(); renderList(); renderRecentWords();
   } catch(e) { showToast("Could not load words","error"); }
 }
 
@@ -460,15 +472,8 @@ async function autoSave(parsed) {
     const result = await saveWord({...parsed, tags});
     if (result && result.success) {
       words.push({id: result.id, ...parsed, tags, times_seen:0, times_correct:0});
-      renderTagChips(); renderFCTagFilters(); renderList();
-      badge.textContent = "✓ Saved to your vocabulary"; badge.classList.add("show");
-      setTimeout(() => {
-        document.getElementById("input-word").value = "";
-        document.getElementById("result-box").innerHTML = '<div class="result-placeholder">will appear here</div>';
-        document.getElementById("btn-translate").disabled = true;
-        selectedTags.clear(); renderTagChips();
-        setTimeout(() => badge.classList.remove("show"), 800);
-      }, 1800);
+      renderTagChips(); renderFCTagFilters(); renderList(); renderRecentWords();
+      badge.textContent = "✓ Saved"; badge.classList.add("show");
     } else {
       throw new Error("Save failed");
     }
@@ -796,6 +801,22 @@ function showToast(msg,type="") {
   const t=document.getElementById("toast");
   t.textContent=msg; t.className="toast"+(type?" "+type:""); t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2800);
+}
+
+// ── RECENT WORDS ──────────────────────────────────────────
+function renderRecentWords() {
+  const section = document.getElementById("recent-section");
+  const list = document.getElementById("recent-list");
+  if (!words.length) { section.style.display = "none"; return; }
+  section.style.display = "block";
+  const recent = [...words].slice(-10).reverse();
+  list.innerHTML = recent.map(w => `
+    <div class="recent-item">
+      <div class="recent-es">${w.spanish}</div>
+      <div class="recent-en">${w.english}</div>
+      ${w.pronunciation && w.pronunciation !== 'pronounced as spelled'
+        ? `<div class="recent-pron">${w.pronunciation}</div>` : ''}
+    </div>`).join('');
 }
 
 // ── API KEY MODAL ─────────────────────────────────────────
