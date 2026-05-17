@@ -363,12 +363,15 @@ function jsonp(params) {
 
 // ── DATA ──────────────────────────────────────────────────
 async function loadWords() {
+  document.getElementById("word-list").innerHTML = `<div class="empty-state"><div class="loading-dots" style="font-size:1.2rem">Loading</div></div>`;
   try {
     const data = await jsonp({action: "getWords"});
     words = Array.isArray(data) ? data : [];
     words.forEach(w => (w.tags||"").split(",").forEach(t => t.trim() && allTags.add(t.trim())));
     renderTagChips(); renderFCTagFilters(); renderList(); renderRecentWords();
-  } catch(e) { showToast("Could not load words","error"); }
+  } catch(e) {
+    document.getElementById("word-list").innerHTML = `<div class="empty-state"><p style="color:var(--accent)">Could not load words.<br><br><button class="btn btn-ghost" style="font-size:0.78rem" onclick="loadWords()">Retry</button></p></div>`;
+  }
 }
 
 async function loadSessions() {
@@ -906,11 +909,7 @@ async function saveKeyModal() {
 }
 
 // ── INIT ──────────────────────────────────────────────────
-async function init() {
-  await loadClaudeKey();
-  await loadWords();
-}
-init();
+Promise.all([loadClaudeKey(), loadWords()]);
 </script>
 </body>
 </html>
