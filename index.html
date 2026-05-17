@@ -344,7 +344,7 @@ function jsonp(params) {
     const timeout = setTimeout(() => {
       delete window[cbName];
       reject(new Error("Timeout"));
-    }, 10000);
+    }, 20000);
 
     window[cbName] = (data) => {
       clearTimeout(timeout);
@@ -906,8 +906,11 @@ async function saveKeyModal() {
 }
 
 // ── INIT ──────────────────────────────────────────────────
-loadClaudeKey();
-loadWords();
+async function init() {
+  await loadClaudeKey();
+  await loadWords();
+}
+init();
 </script>
 </body>
 </html>
