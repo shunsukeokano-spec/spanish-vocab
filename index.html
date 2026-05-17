@@ -858,13 +858,22 @@ function renderRecentWords() {
   if (!words.length) { section.style.display = "none"; return; }
   section.style.display = "block";
   const recent = [...words].slice(-10).reverse();
-  list.innerHTML = recent.map(w => `
-    <div class="recent-item">
-      <div class="recent-es">${w.spanish}</div>
-      <div class="recent-en">${w.english}</div>
-      ${w.pronunciation && w.pronunciation !== 'pronounced as spelled'
-        ? `<div class="recent-pron">${w.pronunciation}</div>` : ''}
-    </div>`).join('');
+  list.innerHTML = recent.map(w => {
+    const safeId = w.id.replace(/[^a-z0-9-]/gi,'');
+    const wEs = w.spanish.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    const wEn = w.english.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    return `
+    <div class="recent-item" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <div class="recent-es">${w.spanish}</div>
+        <div class="recent-en">${w.english}</div>
+        ${w.pronunciation && w.pronunciation !== 'pronounced as spelled'
+          ? `<div class="recent-pron">${w.pronunciation}</div>` : ''}
+        <button class="wi-example-btn" style="margin-left:auto" onclick="toggleListExample('${w.id}','${wEs}','${wEn}')">💬</button>
+      </div>
+      <div class="wi-example-row" id="wiex-${safeId}" style="display:none;margin-top:0;padding-top:6px"></div>
+    </div>`;
+  }).join('');
 }
 
 // ── API KEY MODAL ─────────────────────────────────────────
