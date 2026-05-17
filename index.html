@@ -155,9 +155,14 @@
   .word-list { display: flex; flex-direction: column; gap: 9px; }
   .word-item {
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 18px; display: flex; align-items: center; gap: 14px; transition: box-shadow 0.15s;
+    padding: 14px 18px; display: flex; flex-direction: column; gap: 0; transition: box-shadow 0.15s;
   }
   .word-item:hover { box-shadow: var(--shadow); }
+  .wi-top { display: flex; align-items: center; gap: 14px; }
+  .wi-example-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.84rem; line-height: 1.6; color: var(--ink2); font-style: italic; }
+  .wi-example-row strong { font-style: normal; color: var(--ink); display: block; margin-bottom: 2px; }
+  .wi-example-btn { background: none; border: none; cursor: pointer; font-size: 0.76rem; color: var(--accent2); opacity: 0.7; padding: 2px 4px; white-space: nowrap; transition: opacity 0.15s; }
+  .wi-example-btn:hover { opacity: 1; }
   .wi-spanish { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; min-width: 130px; }
   .wi-english { font-size: 0.83rem; color: var(--ink2); flex: 1; }
   .wi-tags { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -747,14 +752,55 @@ function renderList() {
     const seen=parseInt(w.times_seen)||0, correct=parseInt(w.times_correct)||0;
     const pct=seen>0?Math.round((correct/seen)*100):null;
     const safeId=w.id.replace(/[^a-z0-9-]/gi,'');
+    const wEs=w.spanish.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    const wEn=w.english.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
     return `<div class="word-item" id="wi-${safeId}">
-      <div class="wi-spanish">${w.spanish}</div>
-      <div class="wi-english">${w.english}${w.pronunciation?`<br><span style="opacity:0.5;font-size:0.73rem;font-style:italic">${w.pronunciation}</span>`:''}</div>
-      <div class="wi-tags">${wTags.map(t=>`<span class="wi-tag">${t}</span>`).join('')}</div>
-      <div class="wi-stats">${seen>0?`${pct}%<br><span style="opacity:0.5">${seen} seen</span>`:'—'}</div>
-      <button class="wi-edit-btn" onclick="startEdit('${w.id}')" title="Edit">✏️</button>
+      <div class="wi-top">
+        <div class="wi-spanish">${w.spanish}</div>
+        <div class="wi-english">${w.english}${w.pronunciation?`<br><span style="opacity:0.5;font-size:0.73rem;font-style:italic">${w.pronunciation}</span>`:''}</div>
+        <div class="wi-tags">${wTags.map(t=>`<span class="wi-tag">${t}</span>`).join('')}</div>
+        <div class="wi-stats">${seen>0?`${pct}%<br><span style="opacity:0.5">${seen} seen</span>`:'—'}</div>
+        <button class="wi-example-btn" onclick="toggleListExample('${w.id}','${wEs}','${wEn}')" title="Example sentence">💬</button>
+        <button class="wi-edit-btn" onclick="startEdit('${w.id}')" title="Edit">✏️</button>
+      </div>
+      <div class="wi-example-row" id="wiex-${safeId}" style="display:none"></div>
     </div>`;
   }).join('');
+}
+
+// ── LIST EXAMPLE SENTENCES ────────────────────────────────
+async function toggleListExample(id, spanish, english) {
+  const safeId = id.replace(/[^a-z0-9-]/gi,'');
+  const box = document.getElementById(`wiex-${safeId}`);
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if (box.dataset.loaded) return;
+  box.innerHTML = 'Loading<span class="loading-dots"></span>';
+  const apiKey = getClaudeKey();
+  if (!apiKey) { box.innerHTML = 'Enter your API key via ⚙ to see examples.'; return; }
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5",
+        max_tokens: 256,
+        messages: [{ role: "user", content: `Write one short, natural example sentence in Spanish using the word "${spanish}" (meaning: ${english}). Keep it simple and conversational (beginner to intermediate level).\n\nReply in this exact format:\nSpanish: [sentence]\nEnglish: [translation]` }]
+      })
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const lines = data.content[0].text.trim().split("\n").map(l => l.replace(/^(Spanish|English):\s*/i,"").trim()).filter(Boolean);
+    box.innerHTML = `<strong>${lines[0]||''}</strong>${lines[1]?`<span style="opacity:0.7">${lines[1]}</span>`:''}`;
+    box.dataset.loaded = "1";
+  } catch(e) {
+    box.innerHTML = `Could not load example.`;
+  }
 }
 
 // ── WORD EDITING ──────────────────────────────────────────
