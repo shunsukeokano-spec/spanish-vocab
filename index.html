@@ -155,6 +155,9 @@
   .wi-stats { font-size: 0.68rem; color: var(--ink2); text-align: right; white-space: nowrap; }
   .wi-edit-btn { background: none; border: none; cursor: pointer; font-size: 0.80rem; opacity: 0.35; padding: 4px; transition: opacity 0.15s; }
   .wi-edit-btn:hover { opacity: 1; }
+  .wi-delete-btn { background: none; border: none; cursor: pointer; font-size: 0.80rem; opacity: 0.25; padding: 4px; transition: opacity 0.15s; color: var(--accent); }
+  .wi-delete-btn:hover { opacity: 1; }
+  .wi-confirm-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 0.76rem; color: var(--ink2); }
   .wi-edit-form { width: 100%; display: flex; flex-direction: column; gap: 8px; }
   .wi-edit-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 0.86rem; background: var(--bg); color: var(--ink); outline: none; }
   .wi-edit-input:focus { border-color: var(--accent); }
@@ -591,8 +594,14 @@ function renderList() {
         <div class="wi-stats">${seen>0?`${pct}%<br><span style="opacity:0.5">${seen} seen</span>`:'—'}</div>
         <button class="wi-example-btn" onclick="toggleListExample('${w.id}','${wEs}','${wEn}')" title="Example sentence">💬</button>
         <button class="wi-edit-btn" onclick="startEdit('${w.id}')" title="Edit">✏️</button>
+        <button class="wi-delete-btn" onclick="confirmDelete('${w.id}')" title="Delete">🗑</button>
       </div>
       <div class="wi-example-row" id="wiex-${safeId}" style="display:none"></div>
+      <div class="wi-confirm-row" id="widel-${safeId}" style="display:none">
+        Remove this word?
+        <button class="btn btn-primary" style="margin:0;padding:5px 14px;font-size:0.72rem;width:auto" onclick="deleteWord('${w.id}')">Yes, delete</button>
+        <button class="btn btn-ghost" style="padding:5px 14px;font-size:0.72rem" onclick="cancelDelete('${safeId}')">Cancel</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -630,6 +639,25 @@ async function toggleListExample(id, spanish, english) {
   } catch(e) {
     box.innerHTML = `Could not load example.`;
   }
+}
+
+// ── WORD DELETE ───────────────────────────────────────────
+function confirmDelete(id) {
+  const safeId = id.replace(/[^a-z0-9-]/gi,'');
+  document.getElementById(`widel-${safeId}`).style.display = 'flex';
+}
+function cancelDelete(safeId) {
+  document.getElementById(`widel-${safeId}`).style.display = 'none';
+}
+async function deleteWord(id) {
+  try {
+    const result = await jsonp({action: 'deleteWord', id});
+    if (result && result.success) {
+      words = words.filter(w => w.id !== id);
+      renderList(); renderRecentWords();
+      showToast('Word removed', 'success');
+    } else throw new Error();
+  } catch(e) { showToast('Delete failed', 'error'); }
 }
 
 // ── WORD EDITING ──────────────────────────────────────────
@@ -706,10 +734,20 @@ function renderRecentWords() {
         ${w.pronunciation && w.pronunciation !== 'pronounced as spelled'
           ? `<div class="recent-pron">${w.pronunciation}</div>` : ''}
         <button class="wi-example-btn" style="margin-left:auto" onclick="toggleListExample('${w.id}','${wEs}','${wEn}')">💬</button>
+        <button class="wi-delete-btn" onclick="confirmDeleteRecent('${w.id}','${safeId}')">🗑</button>
+      </div>
+      <div class="wi-confirm-row" id="rdel-${safeId}" style="display:none">
+        Remove this word?
+        <button class="btn btn-primary" style="margin:0;padding:5px 14px;font-size:0.72rem;width:auto" onclick="deleteWord('${w.id}')">Yes, delete</button>
+        <button class="btn btn-ghost" style="padding:5px 14px;font-size:0.72rem" onclick="document.getElementById('rdel-${safeId}').style.display='none'">Cancel</button>
       </div>
       <div class="wi-example-row" id="wiex-${safeId}" style="display:none;margin-top:0;padding-top:6px"></div>
     </div>`;
   }).join('');
+}
+
+function confirmDeleteRecent(id, safeId) {
+  document.getElementById(`rdel-${safeId}`).style.display = 'flex';
 }
 
 // ── API KEY MODAL ─────────────────────────────────────────
